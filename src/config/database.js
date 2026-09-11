@@ -13,17 +13,17 @@ const db = new sqlite3.Database(dbFile, (err) => {
     console.log('Connected to sqlite database:', dbFile);
 });
 
-// Initialize products table if not exists
+// Initialize pizzas table if not exists
 const initSql = `
-CREATE TABLE IF NOT EXISTS products (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
-  description TEXT,
-  imageUrl TEXT,
-  price REAL NOT NULL,
-  created_at TEXT DEFAULT (datetime('now')),
-  updated_at TEXT DEFAULT (datetime('now'))
-);
+    CREATE TABLE IF NOT EXISTS pizzas (
+                                          id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                          name TEXT NOT NULL,
+                                          ingredients TEXT,
+                                          imageUrl TEXT,
+                                          price REAL NOT NULL,
+                                          created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now'))
+        );
 `;
 
 db.serialize(() => {
@@ -32,6 +32,28 @@ db.serialize(() => {
             console.error('Failed to initialize database', err);
             process.exit(1);
         }
+
+        // Seed a few pizzas on first run (empty table only)
+        db.get('SELECT COUNT(*) AS count FROM pizzas', (countErr, row) => {
+            if (countErr) {
+                console.error('Failed to check pizzas table', countErr);
+                return;
+            }
+            if (row.count === 0) {
+                const seedSql = `
+                    INSERT INTO pizzas (name, ingredients, imageUrl, price)
+                    VALUES (?, ?, ?, ?)
+                `;
+                const seedData = [
+                    ['Pizza du moment', 'Sauce de tomates jaunes, bresaola, copeaux de parmesan, rucola, tomates cerises, mozzarella fior di latte.', 'https://picsum.photos/200?1', 20],
+                    ['Margherita', 'Mozzarella', '', 12],
+                    ['4 Saisons', 'Jambon, champignons frais, poivrons, artichauts, mozzarella', '', 17],
+                ];
+                const stmt = db.prepare(seedSql);
+                seedData.forEach((pizza) => stmt.run(pizza));
+                stmt.finalize();
+            }
+        });
     });
 });
 
