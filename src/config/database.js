@@ -14,7 +14,7 @@ const db = new sqlite3.Database(dbFile, (err) => {
 });
 
 // Initialize pizzas table if not exists
-const initSql = `
+const initPizzasSql = `
     CREATE TABLE IF NOT EXISTS pizzas (
                                           id INTEGER PRIMARY KEY AUTOINCREMENT,
                                           name TEXT NOT NULL,
@@ -26,10 +26,21 @@ const initSql = `
         );
 `;
 
+// Initialize ingredients table if not exists
+const initIngredientsSql = `
+    CREATE TABLE IF NOT EXISTS ingredients (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        price REAL NOT NULL,
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now'))
+    );
+`;
+
 db.serialize(() => {
-    db.run(initSql, (err) => {
+    db.run(initPizzasSql, (err) => {
         if (err) {
-            console.error('Failed to initialize database', err);
+            console.error('Failed to initialize pizzas table', err);
             process.exit(1);
         }
 
@@ -51,6 +62,36 @@ db.serialize(() => {
                 ];
                 const stmt = db.prepare(seedSql);
                 seedData.forEach((pizza) => stmt.run(pizza));
+                stmt.finalize();
+            }
+        });
+    });
+
+    db.run(initIngredientsSql, (err) => {
+        if (err) {
+            console.error('Failed to initialize ingredients table', err);
+            process.exit(1);
+        }
+
+        // Seed a few ingredients on first run (empty table only)
+        db.get('SELECT COUNT(*) AS count FROM ingredients', (countErr, row) => {
+            if (countErr) {
+                console.error('Failed to check ingredients table', countErr);
+                return;
+            }
+            if (row.count === 0) {
+                const seedSql = `
+                    INSERT INTO ingredients (name, price)
+                    VALUES (?, ?)
+                `;
+                const seedData = [
+                    ['Champignons', 1],
+                    ['Oignons', 1],
+                    ['Jambon', 2],
+                    ['Lardons', 2],
+                ];
+                const stmt = db.prepare(seedSql);
+                seedData.forEach((ingredient) => stmt.run(ingredient));
                 stmt.finalize();
             }
         });
