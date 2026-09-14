@@ -1,4 +1,3 @@
-// app.js
 const express = require('express');
 const morgan = require('morgan');
 const router = require('./routes/router');
@@ -11,7 +10,7 @@ app.use(morgan('dev'));
 app.use(express.json());
 
 // API routes
-app.use('/api/v1', router);
+app.use('/api', router);
 
 // Swagger UI
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
