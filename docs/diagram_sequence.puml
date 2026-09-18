@@ -1,0 +1,59 @@
+@startuml
+title Séquence de création d'une pizza
+
+actor Client
+
+participant "PizzaController" as PC
+participant "Pizza" as P
+participant "IngredientController" as IC
+participant "Ingredient" as I
+database "SQLite" as DB
+
+Client -> PC : POST /api/pizzas\n{name, imageUrl, price, ingredientIds}
+
+activate PC
+
+PC -> PC : Vérifier les paramètres
+
+alt Paramètres invalides
+    PC --> Client : 400 Bad Request
+else Paramètres valides
+
+    loop Pour chaque ingredientId
+        PC -> IC : findOne(ingredientId)
+        activate IC
+        IC -> I : findById(ingredientId)
+        I -> DB : SELECT ingredient par id
+        DB --> I : Résultat
+        I --> IC : Ingredient trouvé ou null
+        IC --> PC : Résultat
+        deactivate IC
+    end
+
+    alt Un ingrédient n'existe pas
+        PC --> Client : 400 Bad Request
+    else Tous les ingrédients existent
+
+        PC -> P : findByName(name)
+        P -> DB : SELECT pizza par nom
+        DB --> P : Résultat
+        P --> PC : Pizza trouvée ou null
+
+        alt Nom déjà utilisé
+            PC --> Client : 409 Conflict
+        else Nom disponible
+
+            PC -> PC : ingredients = ingredientIds.join(",")
+            PC -> P : create(name, imageUrl, price, ingredients)
+            P -> DB : INSERT INTO pizzas\n(name, ingredients, imageUrl, price)
+            DB --> P : Pizza créée
+            P --> PC : Nouvelle pizza
+
+            PC --> Client : 201 Created
+        end
+    end
+end
+
+deactivate PC
+
+@enduml
