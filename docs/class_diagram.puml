@@ -1,38 +1,36 @@
 @startuml
-title Products API - Class Diagram
+title Diagramme de classes - Foodtruck
 
-class Product {
-  +int id
-  +string name
-  +string description
-  +string imageUrl
-  +float price
-  +string created_at
-  +string updated_at
-  +static create(obj) : Promise<Product>
-  +static findAll() : Promise<Product[]>
-  +static findById(id) : Promise<Product|null>
-  +static update(id, obj) : Promise<Product|null>
-  +static delete(id) : Promise<number>
+class Pizza {
+    - id : int
+    - name : string
+    - ingredients : string
+    - imageUrl : string
+    - price : float
+    - created_at : datetime
+    - updated_at : datetime
+
+    + create() : Pizza
+    + findAll() : Pizza[]
+    + findById(id : int) : Pizza
+    + update(id : int) : Pizza
+    + delete(id : int) : void
 }
 
-class ProductController {
-  +create(req, res)
-  +findAll(req, res)
-  +findOne(req, res)
-  +update(req, res)
-  +delete(req, res)
+class Ingredient {
+    - id : int
+    - name : string
+    - price : float
+    - created_at : datetime
+    - updated_at : datetime
+
+    + create() : Ingredient
+    + findAll() : Ingredient[]
+    + findById(id : int) : Ingredient
+    + update(id : int) : Ingredient
+    + delete(id : int) : void
 }
 
-class Router {
-  +GET /api/products
-  +POST /api/products
-  +GET /api/products/:id
-  +PUT /api/products/:id
-  +DELETE /api/products/:id
-}
-
-ProductController -- Product : uses >
-Router --> ProductController : routes to >
+Pizza "1..*" -- "1..*" Ingredient : contient
 
 @enduml
